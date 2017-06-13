@@ -303,9 +303,41 @@ static NSString *const timedMetadata = @"timedMetadata";
   NSString *uri = [source objectForKey:@"uri"];
   NSString *type = [source objectForKey:@"type"];
 
-  NSURL *url = (isNetwork || isAsset) ?
+/*
+   NSURL *url = (isNetwork || isAsset) ?
     [NSURL URLWithString:uri] :
     [[NSURL alloc] initFileURLWithPath:[[NSBundle mainBundle] pathForResource:uri ofType:type]];
+*/
+  
+  // Changes to fixe video load issues on iOS
+    
+    NSURL *url = nil;
+    if (isNetwork) {
+        //Load based on the URL
+        url = [NSURL URLWithString:uri];
+    }
+    else if (isAsset) {
+        //Local asset: Can be in the bundle or the uri can be an absolute path of a stored video in the application
+        
+        //Check whether the file loaded from the Bundle,
+        NSString *localPath = [[NSBundle mainBundle] pathForResource:uri ofType:type];
+        if (localPath) {
+            //Let's replace the `uri` to the full path'
+            uri = localPath;
+        }
+        url = [NSURL fileURLWithPath:uri];
+    }else{
+        url = [NSURL fileURLWithPath:uri];
+        NSString *localPath = [[NSBundle mainBundle] pathForResource:uri ofType:type];
+        if (localPath) {
+            //Let's replace the `uri` to the full path'
+            uri = localPath;
+            url = [NSURL fileURLWithPath:uri];
+            isAsset = true;
+        }
+        //url = [NSURL fileURLWithPath:uri];
+        
+    }
 
   if (isNetwork) {
     NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
