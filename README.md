@@ -29,6 +29,30 @@ If you would like to allow other apps to play music over your video component, a
 ```
 Note: you can also use the `ignoreSilentSwitch` prop, shown below.
 
+#### tvOS
+
+Run `react-native link` to link the react-native-video library.
+
+`react-native link` don’t works properly with the tvOS target so we need to add the library manually.
+
+First select your project in Xcode.
+
+<img src="./docs/tvOS-step-1.jpg" width="40%">
+
+After that, select the tvOS target of your application and select « General » tab
+
+<img src="./docs/tvOS-step-2.jpg" width="40%">
+
+Scroll to « Linked Frameworks and Libraries » and tap on the + button
+
+<img src="./docs/tvOS-step-3.jpg" width="40%">
+
+Select RCTVideo-tvOS
+
+<img src="./docs/tvOS-step-4.jpg" width="40%">
+
+That’s all, you can use react-native-video for your tvOS application
+
 #### Android
 
 Run `react-native link` to link the react-native-video library.
@@ -128,6 +152,7 @@ using System.Collections.Generic;
 // on a single screen if you like.
 
 <Video source={{uri: "background"}}   // Can be a URL or a local file.
+       poster="https://baconmockup.com/300/200/" // uri to an image to display until the video plays
        ref={(ref) => {
          this.player = ref
        }}                                      // Store reference
@@ -170,12 +195,15 @@ var styles = StyleSheet.create({
 
 - * *For iOS you also need to specify muted for this to work*
 
+To see full list of available props, you can check [the propTypes](https://github.com/react-native-community/react-native-video/blob/master/Video.js#L246) of the Video.js component.
+
 ## Android Expansion File Usage
 
 ```javascript
 // Within your render function, assuming you have a file called
 // "background.mp4" in your expansion file. Just add your main and (if applicable) patch version
 <Video source={{uri: "background", mainVer: 1, patchVer: 0}} // Looks for .mp4 file (background.mp4) in the given expansion version.
+       poster="https://baconmockup.com/300/200/" // uri to an image to display until the video plays
        rate={1.0}                   // 0 is paused, 1 is normal.
        volume={1.0}                 // 0 is muted, 1 is normal.
        muted={false}                // Mutes the audio entirely.
