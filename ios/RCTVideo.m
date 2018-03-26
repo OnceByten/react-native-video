@@ -317,8 +317,10 @@ static NSString *const timedMetadata = @"timedMetadata";
   bool isNetwork = [RCTConvert BOOL:[source objectForKey:@"isNetwork"]];
   bool isAsset = [RCTConvert BOOL:[source objectForKey:@"isAsset"]];
   NSString *uri = [source objectForKey:@"uri"];
+  NSString *origUri = [source objectForKey:@"uri"];
   NSString *type = [source objectForKey:@"type"];
-
+  NSString *filePath = [source objectForKey:@"filePath"];
+  int retryFile = 0;
 /*
    NSURL *url = (isNetwork || isAsset) ?
     [NSURL URLWithString:uri] :
@@ -334,6 +336,117 @@ static NSString *const timedMetadata = @"timedMetadata";
     }
     else if (isAsset) {
         //Local asset: Can be in the bundle or the uri can be an absolute path of a stored video in the application
+        
+        @try
+        {
+            url = [[NSURL alloc] initFileURLWithPath:[[NSBundle mainBundle] pathForResource:uri ofType:type]];
+        }
+        @catch (NSException *exception)
+        {
+            //FAILED - try the lowercase version of the supplied filename
+            NSString *noCapsFilename = [origUri lowercaseString];
+            uri = noCapsFilename;
+            
+            retryFile = 1;
+        }
+        
+        if(retryFile==1) {
+            @try {
+                retryFile = 0;
+                url = [[NSURL alloc] initFileURLWithPath:[[NSBundle mainBundle] pathForResource:uri ofType:type]];
+            }
+            @catch(NSException *exception)
+            {
+                if([filePath rangeOfString:@"/"].location != NSNotFound){
+                    uri = [origUri stringByReplacingOccurrencesOfString:@".mp4" withString:@".mov"];
+                    NSString *newUri;
+                    newUri = [NSString stringWithFormat:@"%@%@", filePath , uri];
+                    uri = newUri;
+                    retryFile = 2;
+                }
+                else {
+                    //FAILED - try the original file with the extension changed
+                    uri = [origUri stringByReplacingOccurrencesOfString:@".mp4" withString:@".mov"];
+                    retryFile = 1;
+                }
+            }
+        }
+        
+        if(retryFile==2) {
+            @try {
+                retryFile = 0;
+                url = [NSURL fileURLWithPath:uri];
+            }
+            @catch(NSException *exception) {
+                uri = [origUri stringByReplacingOccurrencesOfString:@".mp4" withString:@".mov"];
+                NSString *newUri;
+                newUri = [NSString stringWithFormat:@"%@%@", filePath , uri];
+                uri = [newUri lowercaseString];;
+                retryFile = 2;
+            }
+        }
+        else if(retryFile==1) {
+            @try {
+                //(b)
+                retryFile = 0;
+                url = [[NSURL alloc] initFileURLWithPath:[[NSBundle mainBundle] pathForResource:uri ofType:type]];
+            }
+            @catch(NSException *exception)
+            {
+                //FAILED - finally, try the changed extension file name to lowercase
+                NSString *noCapsFilename = [origUri lowercaseString];
+                uri = [noCapsFilename stringByReplacingOccurrencesOfString:@".mp4" withString:@".mov"];
+                
+                retryFile = 1;
+            }
+        }
+        
+        if(retryFile==2) {
+            @try {
+                //(a)
+                retryFile = 0;
+                url = [NSURL fileURLWithPath:uri];
+            }
+            @catch(NSException *exception) {
+                //FAILED - finally, try the changed extension file name to lowercase
+                uri = [origUri stringByReplacingOccurrencesOfString:@".mp4" withString:@".mov"];
+                retryFile = 1;
+            }
+        }
+        else if(retryFile==1) {
+            @try {
+                retryFile = 0;
+                url = [[NSURL alloc] initFileURLWithPath:[[NSBundle mainBundle] pathForResource:uri ofType:type]];
+            }
+            @catch(NSException *exception)
+            {
+                //end of the line - we didn't find any variation
+            }
+        }
+        
+        if(retryFile==1) {
+            @try {
+                retryFile = 0;
+                url = [[NSURL alloc] initFileURLWithPath:[[NSBundle mainBundle] pathForResource:uri ofType:type]];
+            }
+            @catch(NSException *exception)
+            {
+                NSString *noCapsFilename = [origUri lowercaseString];
+                uri = [noCapsFilename stringByReplacingOccurrencesOfString:@".mp4" withString:@".mov"];
+                retryFile = 1;
+            }
+        }
+        
+        //pass 6 - (file sys fail) main bundle mov lower
+        if(retryFile==1) {
+            @try {
+                url = [[NSURL alloc] initFileURLWithPath:[[NSBundle mainBundle] pathForResource:uri ofType:type]];
+            }
+            @catch(NSException *exception)
+            {
+                //end of the line - no file!
+            }
+        }
         
         //Check whether the file loaded from the Bundle,
         NSString *localPath = [[NSBundle mainBundle] pathForResource:uri ofType:type];
