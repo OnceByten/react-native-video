@@ -190,6 +190,7 @@ export default class Video extends Component {
         type: source.type || '',
         mainVer: source.mainVer || 0,
         patchVer: source.patchVer || 0,
+        filePath: source.filePath || '',
       },
       onVideoLoadStart: this._onLoadStart,
       onVideoLoad: this._onLoad,
