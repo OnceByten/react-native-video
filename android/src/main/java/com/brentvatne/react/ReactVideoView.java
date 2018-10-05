@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.widget.MediaController;
 
@@ -348,6 +349,7 @@ public class ReactVideoView extends ScalableVideoView implements MediaPlayer.OnP
                 mProgressUpdateHandler.post(mProgressUpdateRunnable);
             }
         }
+        setKeepScreenOn(!mPaused);
     }
 
     public void setMutedModifier(final boolean muted) {
@@ -527,6 +529,9 @@ public class ReactVideoView extends ScalableVideoView implements MediaPlayer.OnP
 
         isCompleted = true;
         mEventEmitter.receiveEvent(getId(), Events.EVENT_END.toString(), null);
+        if (!mRepeat) {
+            setKeepScreenOn(false);
+        }
     }
 
     @Override
@@ -534,6 +539,7 @@ public class ReactVideoView extends ScalableVideoView implements MediaPlayer.OnP
 
         mMediaPlayerValid = false;
         super.onDetachedFromWindow();
+        setKeepScreenOn(false);
     }
 
     @Override
@@ -547,7 +553,7 @@ public class ReactVideoView extends ScalableVideoView implements MediaPlayer.OnP
         else {
             setSrc(mSrcUriString, mSrcType, mSrcIsNetwork,mSrcIsAsset);
         }
-
+        setKeepScreenOn(true);
     }
 
     @Override
